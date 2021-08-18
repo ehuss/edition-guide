@@ -82,3 +82,35 @@ that this is a function not a macro): `std::panic::panic_any(MyStruct)`.
 In the case of panic messages that include curly braces but the wrong number of arguments (e.g., `panic!("Some curlies: {}")`), 
 you can panic with the string literal by either using the same syntax as `println!` (i.e., `panic!("{}", "Some curlies: {}")`) 
 or by escaping the curly braces (i.e., `panic!("Some curlies: {{}}")`).
+
+### Manual suggestions
+
+In some cases, the `non_fmt_panics` provides a suggestion, but the compiler cannot know if the suggestion is correct, so `cargo fix` will not apply it automatically.
+In these situations, you will need to fix the code manually.
+
+For example, if a non-string is passed as the second argument to the [`assert!`](../../std/macro.assert.html) macro, this causes the second argument to be raised as the panic payload.
+In Rust 2021, this isn't allowed.
+There are several different ways you can choose to rewrite it.
+For example, given the following:
+
+```rust
+# let err = "abc".parse::<i32>().unwrap_err();
+assert!(err.to_string().contains("invalid digit"), err);
+```
+
+The compiler doesn't know if you are potentially catching the panic and extracting the `err` payload.
+To be conservative, it won't automatically change the code, but the following are some options you can take:
+
+```rust
+# let err = "abc".parse::<i32>().unwrap_err();
+// If you intended to just display the error, and it implements the Display trait:
+assert!(err.to_string().contains("invalid digit"), "{}", err);
+
+// Or if you would prefer the debug display, and it implements Debug:
+assert!(err.to_string().contains("invalid digit"), "{:?}", err);
+
+// If you really did intend to raise the error as a panic payload:
+if !err.to_string().contains("invalid digit") {
+    std::panic::panic_any(err);
+}
+```
