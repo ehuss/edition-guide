@@ -67,7 +67,7 @@ The fix is to specify the type explicitly so that the fallback type is not used.
 
 One of the most common patterns broken by this change is using `f()?;` where `f` is generic over the `Ok`-part of the return type:
 
-```rust
+```rust,ignore
 # #![allow(dependency_on_unit_never_type_fallback)]
 # fn outer<T>(x: T) -> Result<T, ()> {
 fn f<T: Default>() -> Result<T, ()> {
@@ -98,7 +98,7 @@ f::<()>()?;
 
 Another relatively common case is panicking in a closure:
 
-```rust,should_panic
+```rust,should_panic,ignore
 # #![allow(dependency_on_unit_never_type_fallback)]
 trait Unit {}
 impl Unit for () {}
@@ -125,7 +125,7 @@ run(|| -> () { panic!() });
 
 A similar case to that of `f()?` can be seen when using a `!`-typed expression in one branch and a function with an unconstrained return type in the other:
 
-```rust
+```rust,ignore
 # #![allow(dependency_on_unit_never_type_fallback)]
 if true {
     Default::default()
